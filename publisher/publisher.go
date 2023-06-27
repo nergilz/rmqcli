@@ -8,13 +8,13 @@ import (
 )
 
 type Publisher struct {
-	Cfg rmqcli.RmqConfig
+	Cfg *rmqcli.RmqConfig
 	Ch  *amqp.Channel
 }
 
 func NewPublisher(cfg *rmqcli.RmqConfig, ch *amqp.Channel) *Publisher {
 	return &Publisher{
-		Cfg: *cfg,
+		Cfg: cfg,
 		Ch:  ch,
 	}
 }
