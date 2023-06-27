@@ -29,7 +29,7 @@ func (p *Publisher) Run(pub *amqp.Publishing, qName, exchange string) error {
 
 	p.Ch = ch
 
-	queue, err := p.Ch.QueueDeclare(qName, false, false, false, false, nil)
+	queue, err := ch.QueueDeclare(qName, false, false, false, false, nil)
 	if err != nil {
 		return fmt.Errorf("queue declare: %s", err.Error())
 	}
