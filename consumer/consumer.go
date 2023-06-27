@@ -69,7 +69,6 @@ func (c *Consumer) runWorker() {
 			// case <-ctx.Done() // todo
 		}
 	}
-
 }
 
 func (c *Consumer) CloseCh() error {
