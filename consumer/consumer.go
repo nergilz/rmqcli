@@ -13,20 +13,30 @@ type Consumer struct {
 	// WorkersWg  *sync.WaitGroup
 }
 
-func NewConsumer(ch *amqp.Channel) *Consumer {
+func NewConsumer(conn *amqp.Connection) (*Consumer, error) {
+	ch, err := conn.Channel()
+	if err != nil {
+		return nil, err
+	}
+	defer ch.Close()
+
 	return &Consumer{
 		Ch:            ch,
 		CloseConsumer: make(chan struct{}),
 		// WorkersWg: &sync.WaitGroup{},
-	}
+	}, nil
 }
 
 func (c *Consumer) Run(queueName string) error {
 	queue, err := c.Ch.QueueDeclare(queueName, false, false, false, false, nil)
-	errReceiveHandler(err, "Failed to declare a queue")
+	if err != nil {
+		return err
+	}
 
 	delivery, err := c.Ch.Consume(queue.Name, "", true, false, false, false, nil)
-	errReceiveHandler(err, "Failed consume queue")
+	if err != nil {
+		return err
+	}
 
 	c.Deliveries = delivery
 
@@ -51,7 +61,7 @@ func (c *Consumer) runWorker() {
 			if !isOpen {
 				return
 			}
-			log.Printf(" Received msg: %s", delivery.Body)
+			log.Printf(" Received msg from consumer: %s", delivery.Body)
 			// case <-c.StopConsumer // todo
 			// case <-ctx.Done() // todo
 		}
