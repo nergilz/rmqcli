@@ -2,6 +2,7 @@ package rmqcli
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/nergilz/rmqcli/consumer"
@@ -33,12 +34,12 @@ func InitRmqCli(ctx context.Context, url string) (*RmqCli, error) {
 
 	p, err := publisher.NewPublisher(ctx, conn)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("new publisher: %s", err.Error())
 	}
 
 	c, err := consumer.NewConsumer(conn)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("new consumer: %s", err.Error())
 	}
 
 	cli := &RmqCli{

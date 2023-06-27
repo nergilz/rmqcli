@@ -2,6 +2,7 @@ package publisher
 
 import (
 	"context"
+	"fmt"
 
 	amqp "github.com/rabbitmq/amqp091-go"
 )
@@ -29,7 +30,7 @@ func NewPublisher(ctx context.Context, conn *amqp.Connection) (*Publisher, error
 func (p *Publisher) Run(pub *amqp.Publishing, qName, exchange string) error {
 	queue, err := p.Ch.QueueDeclare(qName, false, false, false, false, nil)
 	if err != nil {
-		return err
+		return fmt.Errorf("queue declare: %s", err.Error())
 	}
 
 	err = p.Ch.PublishWithContext(
@@ -41,7 +42,7 @@ func (p *Publisher) Run(pub *amqp.Publishing, qName, exchange string) error {
 		*pub,
 	)
 	if err != nil {
-		return err
+		return fmt.Errorf("publish with context: %s", err.Error())
 	}
 
 	return nil
@@ -50,7 +51,7 @@ func (p *Publisher) Run(pub *amqp.Publishing, qName, exchange string) error {
 func (c *Publisher) CloseCh() error {
 	err := c.Ch.Close()
 	if err != nil {
-		return err
+		return fmt.Errorf("close publisher ch: %s", err.Error())
 	}
 	return nil
 }

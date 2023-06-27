@@ -1,6 +1,7 @@
 package consumer
 
 import (
+	"fmt"
 	"log"
 
 	amqp "github.com/rabbitmq/amqp091-go"
@@ -17,7 +18,7 @@ type Consumer struct {
 func NewConsumer(conn *amqp.Connection) (*Consumer, error) {
 	ch, err := conn.Channel()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("init channel: %s", err.Error())
 	}
 	// defer ch.Close()
 
@@ -32,12 +33,12 @@ func NewConsumer(conn *amqp.Connection) (*Consumer, error) {
 func (c *Consumer) Run(queueName string) error {
 	queue, err := c.Ch.QueueDeclare(queueName, false, false, false, false, nil)
 	if err != nil {
-		return err
+		return fmt.Errorf("queue declare: %s", err.Error())
 	}
 
 	delivery, err := c.Ch.Consume(queue.Name, "", true, false, false, false, nil)
 	if err != nil {
-		return err
+		return fmt.Errorf("ch consume: %s", err.Error())
 	}
 
 	c.Deliveries = delivery
@@ -74,7 +75,7 @@ func (c *Consumer) runWorker() {
 func (c *Consumer) CloseCh() error {
 	err := c.Ch.Close()
 	if err != nil {
-		return err
+		return fmt.Errorf("close channel: %s", err.Error())
 	}
 	return nil
 }
