@@ -30,7 +30,7 @@ func InitRmqCli(ctx context.Context, url string) (*RmqCli, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer conn.Close()
+	// defer conn.Close()
 
 	p, err := publisher.NewPublisher(ctx, conn)
 	if err != nil {
