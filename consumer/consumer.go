@@ -7,33 +7,33 @@ import (
 )
 
 type Consumer struct {
-	Ch            *amqp.Channel
+	Conn          *amqp.Connection
 	Deliveries    <-chan amqp.Delivery
 	CloseConsumer chan struct{}
 	// WorkersWg  *sync.WaitGroup
 }
 
 func NewConsumer(conn *amqp.Connection) (*Consumer, error) {
-	ch, err := conn.Channel()
-	if err != nil {
-		return nil, err
-	}
-	defer ch.Close()
-
 	return &Consumer{
-		Ch:            ch,
+		Conn:          conn,
 		CloseConsumer: make(chan struct{}),
 		// WorkersWg: &sync.WaitGroup{},
 	}, nil
 }
 
 func (c *Consumer) Run(queueName string) error {
-	queue, err := c.Ch.QueueDeclare(queueName, false, false, false, false, nil)
+	ch, err := c.Conn.Channel()
+	if err != nil {
+		return err
+	}
+	defer ch.Close()
+
+	queue, err := ch.QueueDeclare(queueName, false, false, false, false, nil)
 	if err != nil {
 		return err
 	}
 
-	delivery, err := c.Ch.Consume(queue.Name, "", true, false, false, false, nil)
+	delivery, err := ch.Consume(queue.Name, "", true, false, false, false, nil)
 	if err != nil {
 		return err
 	}
