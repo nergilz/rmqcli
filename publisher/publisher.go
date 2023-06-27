@@ -14,20 +14,21 @@ type Publisher struct {
 }
 
 func NewPublisher(ctx context.Context, conn *amqp.Connection) (*Publisher, error) {
-	ch, err := conn.Channel()
-	if err != nil {
-		return nil, err
-	}
-	// defer ch.Close()
-
 	return &Publisher{
 		Ctx:  ctx,
-		Ch:   ch,
 		Conn: conn,
 	}, nil
 }
 
 func (p *Publisher) Run(pub *amqp.Publishing, qName, exchange string) error {
+	ch, err := p.Conn.Channel()
+	if err != nil {
+		return fmt.Errorf("open channel: %s", err.Error())
+	}
+	// defer ch.Close()
+
+	p.Ch = ch
+
 	queue, err := p.Ch.QueueDeclare(qName, false, false, false, false, nil)
 	if err != nil {
 		return fmt.Errorf("queue declare: %s", err.Error())
