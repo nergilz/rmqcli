@@ -29,8 +29,20 @@ func InitRmqCli(ctx context.Context, url string) (*RmqCli, error) {
 	}
 	defer conn.Close()
 
+	p, err := publisher.NewPublisher(conn)
+	if err != nil {
+		return nil, err
+	}
+
+	c, err := consumer.NewConsumer(conn)
+	if err != nil {
+		return nil, err
+	}
+
 	cli := &RmqCli{
-		Conn: conn,
+		Conn:      conn,
+		Publisher: p,
+		Consumer:  c,
 	}
 
 	return cli, nil
