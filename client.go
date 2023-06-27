@@ -3,6 +3,8 @@ package rmqcli
 import (
 	"context"
 
+	"github.com/nergilz/rmqcli/consumer"
+	"github.com/nergilz/rmqcli/publisher"
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
@@ -15,8 +17,10 @@ type RmqConfig struct {
 }
 
 type RmqCli struct {
-	Conn *amqp.Connection
-	Ch   *amqp.Channel
+	Conn      *amqp.Connection
+	Ch        *amqp.Channel
+	Consumer  *consumer.Consumer
+	Publisher *publisher.Publisher
 }
 
 func InitRmqCli(ctx context.Context, cfg *RmqConfig) (*RmqCli, error) {
