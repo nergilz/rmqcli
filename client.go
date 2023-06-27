@@ -2,6 +2,7 @@ package rmqcli
 
 import (
 	"context"
+	"time"
 
 	"github.com/nergilz/rmqcli/consumer"
 	"github.com/nergilz/rmqcli/publisher"
@@ -17,9 +18,10 @@ import (
 // }
 
 type RmqCli struct {
-	Conn      *amqp.Connection
-	Consumer  *consumer.Consumer
-	Publisher *publisher.Publisher
+	Conn             *amqp.Connection
+	Consumer         *consumer.Consumer
+	Publisher        *publisher.Publisher
+	reconnectTimeout time.Duration
 }
 
 func InitRmqCli(ctx context.Context, url string) (*RmqCli, error) {
@@ -29,7 +31,7 @@ func InitRmqCli(ctx context.Context, url string) (*RmqCli, error) {
 	}
 	defer conn.Close()
 
-	p, err := publisher.NewPublisher(conn)
+	p, err := publisher.NewPublisher(ctx, conn)
 	if err != nil {
 		return nil, err
 	}

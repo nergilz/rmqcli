@@ -19,7 +19,7 @@ func NewConsumer(conn *amqp.Connection) (*Consumer, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer ch.Close()
+	// defer ch.Close()
 
 	return &Consumer{
 		Ch:            ch,
@@ -71,8 +71,10 @@ func (c *Consumer) runWorker() {
 
 }
 
-func errReceiveHandler(err error, msg string) {
+func (c *Consumer) CloseCh() error {
+	err := c.Ch.Close()
 	if err != nil {
-		log.Panicf("%s: %s", msg, err)
+		return err
 	}
+	return nil
 }
