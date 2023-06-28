@@ -6,22 +6,24 @@ import (
 	"time"
 
 	"github.com/nergilz/rmqcli/consumer"
+	"github.com/nergilz/rmqcli/declorator"
 	"github.com/nergilz/rmqcli/publisher"
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
-// type RmqConfig struct {
-// 	Url         string
-// 	Queue       string
-// 	Concurrency int
-// 	Exchange    string
-// 	RoutingKey  string
-// }
+type RmqConfig struct {
+	Url         string
+	Queue       string
+	Concurrency int
+	Exchange    string
+	RoutingKey  string
+}
 
 type RmqCli struct {
 	Conn             *amqp.Connection
 	Consumer         *consumer.Consumer
 	Publisher        *publisher.Publisher
+	Declorator       *declorator.Declorator
 	reconnectTimeout time.Duration
 }
 
@@ -30,7 +32,6 @@ func InitRmqCli(ctx context.Context, url string) (*RmqCli, error) {
 	if err != nil {
 		return nil, err
 	}
-	// defer conn.Close()
 
 	p, err := publisher.NewPublisher(ctx, conn)
 	if err != nil {
@@ -49,4 +50,12 @@ func InitRmqCli(ctx context.Context, url string) (*RmqCli, error) {
 	}
 
 	return cli, nil
+}
+
+func (rmq *RmqCli) CloseConnection() error {
+	err := rmq.Conn.Close()
+	if err != nil {
+		return fmt.Errorf("close connection: %s", err.Error())
+	}
+	return nil
 }

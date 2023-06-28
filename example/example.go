@@ -9,55 +9,57 @@ import (
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
-type RmqConfig struct {
-	Url   string
-	Queue string
-}
-
 func main() {
-	cfg := &RmqConfig{
+	cfg := &rmqcli.RmqConfig{
 		Url:   "amqp://guest:guest@localhost:5672/",
-		Queue: "q_hello",
+		Queue: "hello_rmqcli",
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
-
-	body := "test rmq by cli v8.3"
-
-	pub := &amqp.Publishing{
-		ContentType: "text/plain",
-		Body:        []byte(body),
-	}
 
 	cli, err := rmqcli.InitRmqCli(ctx, cfg.Url)
 	if err != nil {
 		log.Println("error init cli:", err.Error())
 	}
 
-	err = cli.Publisher.Run(pub, cfg.Queue, "")
+	runPublisher(cli, cfg.Queue)
+	// runConsumer(cli, cfg.Queue)
+
+	err = cli.CloseConnection()
+	if err != nil {
+		log.Println("error close connection:", err.Error())
+	}
+}
+
+func runPublisher(cli *rmqcli.RmqCli, queue string) {
+	pub := &amqp.Publishing{ContentType: "text/plain", Body: []byte("test rmq msg by cli v9.2")}
+
+	log.Println("run publisher...")
+
+	err := cli.Publisher.Run(pub, queue, "")
 	if err != nil {
 		log.Println("error run publish:", err.Error())
 	}
 
-	err = cli.Publisher.CloseCh()
+	err = cli.Publisher.CloseChannel()
 	if err != nil {
 		log.Println("error close ch:", err.Error())
 	}
+}
 
-	time.Sleep(3 * time.Second)
+func runConsumer(cli *rmqcli.RmqCli, queue string) {
+	log.Println("run consumer...")
 
-	err = cli.Consumer.Run(cfg.Queue)
+	err := cli.Consumer.Run(queue)
 	if err != nil {
 		log.Println("error run publish:", err.Error())
 	}
 
-	err = cli.Consumer.CloseCh()
+	err = cli.Consumer.CloseChannel()
 	if err != nil {
-		log.Println("error close ch:", err.Error())
+		log.Println("error close channel:", err.Error())
 	}
 
-	cli.Conn.Close()
-
-	time.Sleep(3 * time.Second)
+	time.Sleep(2 * time.Second)
 }

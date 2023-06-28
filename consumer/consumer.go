@@ -20,7 +20,6 @@ func NewConsumer(conn *amqp.Connection) (*Consumer, error) {
 	if err != nil {
 		return nil, fmt.Errorf("init channel: %s", err.Error())
 	}
-	// defer ch.Close()
 
 	return &Consumer{
 		Ch:            ch,
@@ -38,7 +37,7 @@ func (c *Consumer) Run(queueName string) error {
 
 	delivery, err := c.Ch.Consume(queue.Name, "", true, false, false, false, nil)
 	if err != nil {
-		return fmt.Errorf("ch consume: %s", err.Error())
+		return fmt.Errorf("channel consume: %s", err.Error())
 	}
 
 	c.Deliveries = delivery
@@ -71,7 +70,7 @@ func (c *Consumer) runWorker() {
 	}
 }
 
-func (c *Consumer) CloseCh() error {
+func (c *Consumer) CloseChannel() error {
 	err := c.Ch.Close()
 	if err != nil {
 		return fmt.Errorf("close channel: %s", err.Error())
