@@ -3,7 +3,6 @@ package rmqcli
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/nergilz/rmqcli/consumer"
 	"github.com/nergilz/rmqcli/declorator"
@@ -20,14 +19,13 @@ type RmqConfig struct {
 }
 
 type RmqCli struct {
-	Conn             *amqp.Connection
-	Consumer         *consumer.Consumer
-	Publisher        *publisher.Publisher
-	Declorator       *declorator.Declorator
-	reconnectTimeout time.Duration
+	Conn       *amqp.Connection
+	Consumer   *consumer.Consumer
+	Publisher  *publisher.Publisher
+	Declorator *declorator.Declorator
 }
 
-func InitRmqCli(ctx context.Context, url string) (*RmqCli, error) {
+func InitRmqCli(ctx context.Context, url string, h consumer.HandlerFoo) (*RmqCli, error) {
 	conn, err := amqp.Dial(url)
 	if err != nil {
 		return nil, err
@@ -38,7 +36,7 @@ func InitRmqCli(ctx context.Context, url string) (*RmqCli, error) {
 		return nil, fmt.Errorf("new publisher: %s", err.Error())
 	}
 
-	c, err := consumer.NewConsumer(conn)
+	c, err := consumer.NewConsumer(ctx, conn, h)
 	if err != nil {
 		return nil, fmt.Errorf("new consumer: %s", err.Error())
 	}

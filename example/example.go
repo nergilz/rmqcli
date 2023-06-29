@@ -18,13 +18,14 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	cli, err := rmqcli.InitRmqCli(ctx, cfg.Url)
+	cli, err := rmqcli.InitRmqCli(ctx, cfg.Url, handlerFoo)
 	if err != nil {
 		log.Println("error init cli:", err.Error())
 	}
 
 	runPublisher(cli, cfg.Queue)
-	// runConsumer(cli, cfg.Queue)
+
+	runConsumer(cli, cfg.Queue)
 
 	err = cli.CloseConnection()
 	if err != nil {
@@ -32,8 +33,12 @@ func main() {
 	}
 }
 
+func handlerFoo(delivery *amqp.Delivery) {
+	log.Printf("Received msg: %s", delivery.Body)
+}
+
 func runPublisher(cli *rmqcli.RmqCli, queue string) {
-	pub := &amqp.Publishing{ContentType: "text/plain", Body: []byte("test rmq msg by cli v9.2")}
+	pub := &amqp.Publishing{ContentType: "text/plain", Body: []byte("test rmq msg by cli v9.5")}
 
 	log.Println("run publisher...")
 

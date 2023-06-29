@@ -1,30 +1,39 @@
 package consumer
 
 import (
+	"context"
 	"fmt"
-	"log"
+	"time"
 
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
+type HandlerFoo func(d *amqp.Delivery)
+
 type Consumer struct {
+	Ctx           context.Context
 	Ch            *amqp.Channel
 	Conn          *amqp.Connection
 	Deliveries    <-chan amqp.Delivery
 	CloseConsumer chan struct{}
+	HandlerFunc   HandlerFoo
+	Reconnect     time.Duration
 	// WorkersWg  *sync.WaitGroup
 }
 
-func NewConsumer(conn *amqp.Connection) (*Consumer, error) {
+func NewConsumer(ctx context.Context, conn *amqp.Connection, h HandlerFoo) (*Consumer, error) {
 	ch, err := conn.Channel()
 	if err != nil {
 		return nil, fmt.Errorf("init channel: %s", err.Error())
 	}
 
 	return &Consumer{
+		Ctx:           ctx,
 		Ch:            ch,
 		Conn:          conn,
 		CloseConsumer: make(chan struct{}),
+		HandlerFunc:   h,
+		Reconnect:     time.Second,
 		// WorkersWg: &sync.WaitGroup{},
 	}, nil
 }
@@ -47,13 +56,33 @@ func (c *Consumer) Run(queueName string) error {
 	// 	go c.runWorker()
 	// }
 
-	go c.runWorker()
+	go c.runWorker(c.Ctx)
+
+	// var res bool
+	// go c.runWorker(c.Ctx, boo(&res))
+	// fmt.Println(res)
 
 	return nil
 }
 
-func (c *Consumer) runWorker() {
+// func foo(delivery *amqp.Delivery) bool {
+// 	log.Printf(" Received msg from consumer: %s", delivery.Body)
+// 	return true
+// }
+
+// func boo(req *bool) func(delivery *amqp.Delivery) bool {
+// 	return func(delivery *amqp.Delivery) bool {
+// 		log.Printf(" Received msg from consumer: %s", delivery.Body)
+// 		*req = false
+// 		return false
+// 	}
+// }
+
+func (c *Consumer) runWorker(ctx context.Context) {
 	// defer c.WorkersWg.Done()
+
+	ticker := time.NewTicker(c.Reconnect)
+	defer ticker.Stop()
 
 	for {
 		select {
@@ -63,9 +92,11 @@ func (c *Consumer) runWorker() {
 			if !isOpen {
 				return
 			}
-			log.Printf(" Received msg from consumer: %s", delivery.Body)
+			go c.HandlerFunc(&delivery)
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
 			// case <-c.StopConsumer // todo
-			// case <-ctx.Done() // todo
 		}
 	}
 }

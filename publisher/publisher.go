@@ -27,7 +27,14 @@ func NewPublisher(ctx context.Context, conn *amqp.Connection) (*Publisher, error
 }
 
 func (p *Publisher) Run(pub *amqp.Publishing, qName, exchange string) error {
-	_, err := p.Ch.QueueDeclare(qName, false, false, false, false, nil)
+	_, err := p.Ch.QueueDeclare(
+		qName,
+		false,
+		false,
+		false,
+		false,
+		nil,
+	)
 	if err != nil {
 		return fmt.Errorf("queue declare: %s", err.Error())
 	}
