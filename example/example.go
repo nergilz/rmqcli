@@ -33,38 +33,33 @@ func main() {
 	}
 }
 
-func handlerFoo(delivery *amqp.Delivery) {
-	log.Printf("Received msg: %s", delivery.Body)
-}
-
 func runPublisher(cli *rmqcli.RmqCli, queue string) {
-	pub := &amqp.Publishing{ContentType: "text/plain", Body: []byte("test rmq msg by cli v9.5")}
+	pub := &amqp.Publishing{ContentType: "text/plain", Body: []byte("test rmq msg by cli v9.7")}
 
 	log.Println("run publisher...")
 
-	err := cli.Publisher.Run(pub, queue, "")
+	err := cli.Publisher.Publish(pub, "", queue)
 	if err != nil {
 		log.Println("error run publish:", err.Error())
 	}
 
-	err = cli.Publisher.CloseChannel()
-	if err != nil {
-		log.Println("error close ch:", err.Error())
-	}
+	defer cli.Publisher.CloseChannel()
 }
 
 func runConsumer(cli *rmqcli.RmqCli, queue string) {
 	log.Println("run consumer...")
 
-	err := cli.Consumer.Run(queue)
+	err := cli.Consumer.Consume(queue)
 	if err != nil {
 		log.Println("error run publish:", err.Error())
 	}
 
-	err = cli.Consumer.CloseChannel()
-	if err != nil {
-		log.Println("error close channel:", err.Error())
-	}
+	defer cli.Consumer.CloseChannel()
 
-	time.Sleep(2 * time.Second)
+	time.Sleep(time.Second)
+}
+
+func handlerFoo(delivery *amqp.Delivery) {
+	// do something
+	log.Printf("Received msg: %s", delivery.Body)
 }

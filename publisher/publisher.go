@@ -8,9 +8,9 @@ import (
 )
 
 type Publisher struct {
-	Ctx  context.Context
-	Ch   *amqp.Channel
-	Conn *amqp.Connection
+	ctx  context.Context
+	ch   *amqp.Channel
+	conn *amqp.Connection
 }
 
 func NewPublisher(ctx context.Context, conn *amqp.Connection) (*Publisher, error) {
@@ -20,15 +20,15 @@ func NewPublisher(ctx context.Context, conn *amqp.Connection) (*Publisher, error
 	}
 
 	return &Publisher{
-		Ctx:  ctx,
-		Ch:   ch,
-		Conn: conn,
+		ctx:  ctx,
+		ch:   ch,
+		conn: conn,
 	}, nil
 }
 
-func (p *Publisher) Run(pub *amqp.Publishing, qName, exchange string) error {
-	_, err := p.Ch.QueueDeclare(
-		qName,
+func (p *Publisher) Publish(pub *amqp.Publishing, exchange, key string) error {
+	_, err := p.ch.QueueDeclare(
+		key,
 		false,
 		false,
 		false,
@@ -39,10 +39,10 @@ func (p *Publisher) Run(pub *amqp.Publishing, qName, exchange string) error {
 		return fmt.Errorf("queue declare: %s", err.Error())
 	}
 
-	err = p.Ch.PublishWithContext(
-		p.Ctx,
+	err = p.ch.PublishWithContext(
+		p.ctx,
 		exchange,
-		qName,
+		key, // routing_key
 		false,
 		false,
 		*pub,
@@ -55,7 +55,7 @@ func (p *Publisher) Run(pub *amqp.Publishing, qName, exchange string) error {
 }
 
 func (c *Publisher) CloseChannel() error {
-	err := c.Ch.Close()
+	err := c.ch.Close()
 	if err != nil {
 		return fmt.Errorf("close publisher ch: %s", err.Error())
 	}
