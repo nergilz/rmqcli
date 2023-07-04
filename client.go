@@ -53,6 +53,9 @@ func InitRmqCli(ctx context.Context, url string, h consumer.HandlerFoo) (*RmqCli
 }
 
 func (rmq *RmqCli) CloseConnection() error {
+	rmq.Consumer.CloseChannel()
+	rmq.Publisher.CloseChannel()
+
 	err := rmq.Conn.Close()
 	if err != nil {
 		return fmt.Errorf("close connection: %s", err.Error())
