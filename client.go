@@ -20,11 +20,11 @@ type RmqConfig struct {
 }
 
 type RmqCli struct {
-	Conn             *amqp.Connection
+	conn             *amqp.Connection
 	Consumer         *consumer.Consumer
 	Publisher        *publisher.Publisher
 	Declorator       *declorator.Declorator
-	ReconnectTimeout time.Duration
+	reconnectTimeout time.Duration
 }
 
 func InitRmqCli(ctx context.Context, url string, h consumer.HandlerFoo) (*RmqCli, error) {
@@ -44,7 +44,7 @@ func InitRmqCli(ctx context.Context, url string, h consumer.HandlerFoo) (*RmqCli
 	}
 
 	cli := &RmqCli{
-		Conn:      conn,
+		conn:      conn,
 		Publisher: p,
 		Consumer:  c,
 	}
@@ -56,7 +56,7 @@ func (rmq *RmqCli) CloseConnection() error {
 	rmq.Consumer.CloseChannel()
 	rmq.Publisher.CloseChannel()
 
-	err := rmq.Conn.Close()
+	err := rmq.conn.Close()
 	if err != nil {
 		return fmt.Errorf("close connection: %s", err.Error())
 	}
