@@ -3,7 +3,6 @@ package rmqcli
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/nergilz/rmqcli/consumer"
 	"github.com/nergilz/rmqcli/declorator"
@@ -20,11 +19,11 @@ type RmqConfig struct {
 }
 
 type RmqCli struct {
-	conn             *amqp.Connection
-	Consumer         *consumer.Consumer
-	Publisher        *publisher.Publisher
-	Declorator       *declorator.Declorator
-	reconnectTimeout time.Duration
+	conn       *amqp.Connection
+	Consumer   *consumer.Consumer
+	Publisher  *publisher.Publisher
+	Declorator *declorator.Declorator
+	// reconnectTimeout time.Duration
 }
 
 func InitRmqCli(ctx context.Context, url string, h consumer.HandlerFoo) (*RmqCli, error) {
@@ -33,12 +32,12 @@ func InitRmqCli(ctx context.Context, url string, h consumer.HandlerFoo) (*RmqCli
 		return nil, err
 	}
 
-	p, err := publisher.NewPublisher(ctx, conn)
+	p, err := publisher.NewPublisher(conn)
 	if err != nil {
 		return nil, fmt.Errorf("new publisher: %s", err.Error())
 	}
 
-	c, err := consumer.NewConsumer(ctx, conn, h)
+	c, err := consumer.NewConsumer(conn, h)
 	if err != nil {
 		return nil, fmt.Errorf("new consumer: %s", err.Error())
 	}
@@ -53,12 +52,17 @@ func InitRmqCli(ctx context.Context, url string, h consumer.HandlerFoo) (*RmqCli
 }
 
 func (rmq *RmqCli) CloseConnection() error {
-	rmq.Consumer.CloseChannel()
-	rmq.Publisher.CloseChannel()
+	if err := rmq.Consumer.CloseChannel(); err != nil {
+		return err
+	}
 
-	err := rmq.conn.Close()
-	if err != nil {
+	if err := rmq.Publisher.CloseChannel(); err != nil {
+		return err
+	}
+
+	if err := rmq.conn.Close(); err != nil {
 		return fmt.Errorf("close connection: %s", err.Error())
 	}
+
 	return nil
 }

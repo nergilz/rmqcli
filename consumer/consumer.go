@@ -11,7 +11,6 @@ import (
 type HandlerFoo func(d *amqp.Delivery)
 
 type Consumer struct {
-	ctx           context.Context
 	ch            *amqp.Channel
 	conn          *amqp.Connection
 	deliveries    <-chan amqp.Delivery
@@ -21,14 +20,13 @@ type Consumer struct {
 	// workersWg  *sync.WaitGroup
 }
 
-func NewConsumer(ctx context.Context, conn *amqp.Connection, h HandlerFoo) (*Consumer, error) {
+func NewConsumer(conn *amqp.Connection, h HandlerFoo) (*Consumer, error) {
 	ch, err := conn.Channel()
 	if err != nil {
 		return nil, fmt.Errorf("init channel: %s", err.Error())
 	}
 
 	return &Consumer{
-		ctx:           ctx,
 		ch:            ch,
 		conn:          conn,
 		closeConsumer: make(chan struct{}),
@@ -38,7 +36,7 @@ func NewConsumer(ctx context.Context, conn *amqp.Connection, h HandlerFoo) (*Con
 	}, nil
 }
 
-func (c *Consumer) Consume(queueName string) error {
+func (c *Consumer) Consume(ctx context.Context, queueName string) error {
 	queue, err := c.ch.QueueDeclare(queueName, false, false, false, false, nil)
 	if err != nil {
 		return fmt.Errorf("queue declare: %s", err.Error())
@@ -56,7 +54,7 @@ func (c *Consumer) Consume(queueName string) error {
 	// 	go c.runWorker()
 	// }
 
-	go c.runWorker(c.ctx)
+	go c.runWorker(ctx)
 
 	return nil
 }
@@ -85,23 +83,9 @@ func (c *Consumer) runWorker(ctx context.Context) {
 }
 
 func (c *Consumer) CloseChannel() error {
-	err := c.ch.Close()
-	if err != nil {
+	if err := c.ch.Close(); err != nil {
 		return fmt.Errorf("close channel: %s", err.Error())
 	}
+
 	return nil
 }
-
-// example:
-
-// var res bool
-// go c.runWorker(c.Ctx, boo(&res))
-// fmt.Println(res)
-
-// func boo(req *bool) func(delivery *amqp.Delivery) bool {
-// 	return func(delivery *amqp.Delivery) bool {
-// 		log.Printf(" Received msg from consumer: %s", delivery.Body)
-// 		*req = false
-// 		return false
-// 	}
-// }

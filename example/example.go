@@ -23,22 +23,21 @@ func main() {
 		log.Println("error init cli:", err.Error())
 	}
 
-	runPublisher(cli, cfg.Queue)
+	runPublisher(ctx, cli, cfg.Queue)
 
-	runConsumer(cli, cfg.Queue)
+	runConsumer(ctx, cli, cfg.Queue)
 
-	err = cli.CloseConnection()
-	if err != nil {
+	if err := cli.CloseConnection(); err != nil {
 		log.Println("error close connection:", err.Error())
 	}
 }
 
-func runPublisher(cli *rmqcli.RmqCli, queue string) {
+func runPublisher(ctx context.Context, cli *rmqcli.RmqCli, queue string) {
 	pub := &amqp.Publishing{ContentType: "text/plain", Body: []byte("test rmq msg by cli v9.7")}
 
 	log.Println("run publisher...")
 
-	err := cli.Publisher.Publish(pub, "", queue)
+	err := cli.Publisher.Publish(ctx, pub, "", queue)
 	if err != nil {
 		log.Println("error run publish:", err.Error())
 	}
@@ -46,11 +45,10 @@ func runPublisher(cli *rmqcli.RmqCli, queue string) {
 	defer cli.Publisher.CloseChannel()
 }
 
-func runConsumer(cli *rmqcli.RmqCli, queue string) {
+func runConsumer(ctx context.Context, cli *rmqcli.RmqCli, queue string) {
 	log.Println("run consumer...")
 
-	err := cli.Consumer.Consume(queue)
-	if err != nil {
+	if err := cli.Consumer.Consume(ctx, queue); err != nil {
 		log.Println("error run publish:", err.Error())
 	}
 

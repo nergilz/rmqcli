@@ -8,25 +8,23 @@ import (
 )
 
 type Publisher struct {
-	ctx  context.Context
 	ch   *amqp.Channel
 	conn *amqp.Connection
 }
 
-func NewPublisher(ctx context.Context, conn *amqp.Connection) (*Publisher, error) {
+func NewPublisher(conn *amqp.Connection) (*Publisher, error) {
 	ch, err := conn.Channel()
 	if err != nil {
 		return nil, fmt.Errorf("open channel: %s", err.Error())
 	}
 
 	return &Publisher{
-		ctx:  ctx,
 		ch:   ch,
 		conn: conn,
 	}, nil
 }
 
-func (p *Publisher) Publish(pub *amqp.Publishing, exchange, key string) error {
+func (p *Publisher) Publish(ctx context.Context, pub *amqp.Publishing, exchange, key string) error {
 	_, err := p.ch.QueueDeclare(
 		key,
 		false,
@@ -40,7 +38,7 @@ func (p *Publisher) Publish(pub *amqp.Publishing, exchange, key string) error {
 	}
 
 	err = p.ch.PublishWithContext(
-		p.ctx,
+		ctx,
 		exchange,
 		key, // routing_key
 		false,
@@ -59,5 +57,6 @@ func (c *Publisher) CloseChannel() error {
 	if err != nil {
 		return fmt.Errorf("close publisher ch: %s", err.Error())
 	}
+
 	return nil
 }
